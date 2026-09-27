@@ -91,6 +91,10 @@
   .result .level { font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; opacity: .7; margin-top: .25rem; }
   .result .amount { font-size: 3rem; font-weight: 700; color: var(--accent); line-height: 1.15; }
   .result .msg { font-size: .9rem; font-weight: 600; opacity: .8; margin-top: .25rem; max-width: 260px; }
+  .result .halfnote {
+    display: none; margin-top: .5rem; border-radius: 999px; background: rgba(255,255,255,.75);
+    padding: .3rem .9rem; font-size: .75rem; font-weight: 800; color: var(--accent);
+  }
   .btn {
     margin-top: 1rem; border: none; border-radius: 999px; cursor: pointer;
     background: var(--accent); color: #fff; font-family: "Baloo 2", sans-serif;
@@ -166,6 +170,7 @@
       <li class="l2"><span class="ic">🥈</span> Missat upp till 3 to-dos → <b>Nivå 2</b></li>
       <li class="l1"><span class="ic">🥉</span> Missat upp till 5 to-dos → <b>Nivå 1</b></li>
       <li class="l0"><span class="ic">🚫</span> Missat fler än 5 to-dos → ingen utbetalning den månaden</li>
+      <li style="background:#fff3d6"><span class="ic">☀️</span> Augusti 2026: bara 2 veckor → <b>halverad månadspeng</b></li>
     </ul>
   </section>
 
@@ -195,6 +200,7 @@
 (function () {
   "use strict";
   var YEAR = 2026;
+  var HALF_MONTH = YEAR + "-08"; // augusti är bara 2 veckor i år → halverad summa
   var STORAGE_KEY = "manadspeng_v1";
   var MONTHS = ["Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"];
   var CHILDREN = [
@@ -211,6 +217,11 @@
   function levelForMissed(m) { if (m <= 0) return 3; if (m <= 3) return 2; if (m <= 5) return 1; return 0; }
   function monthKey(i) { return YEAR + "-" + String(i + 1).padStart(2, "0"); }
   function monthLabel(key) { return MONTHS[parseInt(key.split("-")[1], 10) - 1] || key; }
+  function amountFor(c, level, key) {
+    if (level <= 0) return 0;
+    var full = c.amounts[level];
+    return key === HALF_MONTH ? full / 2 : full;
+  }
   function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch (e) { return []; } }
   function save(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
 
@@ -268,6 +279,7 @@
             '<p class="level js-level"></p>' +
             '<p class="amount display js-amount"></p>' +
             '<p class="msg js-msg"></p>' +
+            '<p class="halfnote js-halfnote">☀️ Augusti är bara 2 veckor i år – halverad månadspeng!</p>' +
             '<button class="btn js-register">💸 Registrera utbetalning</button>' +
             '<p class="feedback js-feedback"></p>' +
           "</div>" +
@@ -285,6 +297,7 @@
       var levelEl = section.querySelector(".js-level");
       var amountEl = section.querySelector(".js-amount");
       var msgEl = section.querySelector(".js-msg");
+      var halfnote = section.querySelector(".js-halfnote");
       var feedback = section.querySelector(".js-feedback");
 
       function existing() {
@@ -297,12 +310,13 @@
       function update() {
         var missed = Math.max(0, parseInt(missedIn.value || "0", 10) || 0);
         var level = levelForMissed(missed);
-        var amount = level > 0 ? c.amounts[level] : 0;
+        var amount = amountFor(c, level, monthSel.value);
         var pres = PRES[level];
         emojis.textContent = pres.emojis;
         levelEl.textContent = pres.label;
         amountEl.textContent = amount + " kr";
         msgEl.textContent = pres.msg;
+        halfnote.style.display = monthSel.value === HALF_MONTH ? "block" : "none";
         var ex = existing();
         feedback.textContent = ex
           ? monthLabel(monthSel.value) + " är redan registrerad (" + ex.amount + " kr) – spara igen för att uppdatera"
@@ -320,7 +334,7 @@
       section.querySelector(".js-register").addEventListener("click", function () {
         var missed = Math.max(0, parseInt(missedIn.value || "0", 10) || 0);
         var level = levelForMissed(missed);
-        var amount = level > 0 ? c.amounts[level] : 0;
+        var amount = amountFor(c, level, monthSel.value);
         var rec = { child: c.id, monthKey: monthSel.value, missed: missed, level: level, amount: amount, ts: Date.now() };
         payments = payments.filter(function (p) { return !(p.child === rec.child && p.monthKey === rec.monthKey); });
         payments.push(rec);
