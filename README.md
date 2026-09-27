@@ -15,6 +15,7 @@ En webbapp för familjens månadspengsystem. Utbetalning sker i slutet av varje 
 - 🥈 Missat upp till 3 to-dos → Nivå 2
 - 🥉 Missat upp till 5 to-dos → Nivå 1
 - 🚫 Missat fler än 5 to-dos → ingen utbetalning den månaden
+- ☀️ Augusti 2026: bara 2 veckor → **halverad månadspeng**
 
 ## Funktioner
 
