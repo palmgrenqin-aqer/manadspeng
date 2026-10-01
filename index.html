@@ -82,6 +82,7 @@
   }
   select:focus, input:focus { box-shadow: 0 0 0 3px var(--soft); }
   .field + .field { margin-top: 1rem; }
+  .snitt-hint { margin-top: .35rem; font-size: .8rem; font-weight: 800; color: var(--accent); }
 
   .result {
     background: var(--soft); border-radius: 1rem; padding: 1.5rem 1rem;
@@ -91,6 +92,7 @@
   .result .level { font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; opacity: .7; margin-top: .25rem; }
   .result .amount { font-size: 3rem; font-weight: 700; color: var(--accent); line-height: 1.15; }
   .result .msg { font-size: .9rem; font-weight: 600; opacity: .8; margin-top: .25rem; max-width: 260px; }
+  .result .avgline { font-size: .8rem; font-weight: 800; opacity: .65; margin-top: .25rem; }
   .result .halfnote {
     display: none; margin-top: .5rem; border-radius: 999px; background: rgba(255,255,255,.75);
     padding: .3rem .9rem; font-size: .75rem; font-weight: 800; color: var(--accent);
@@ -111,10 +113,10 @@
   .history ul { list-style: none; margin-top: .5rem; }
   .history li { display: flex; align-items: center; gap: .75rem; padding: .5rem 0; border-bottom: 1px solid var(--soft); font-size: .9rem; font-weight: 600; }
   .history li:last-child { border-bottom: none; }
-  .history .m { width: 6rem; }
+  .history .m { width: 6rem; flex-shrink: 0; }
   .history .dim { opacity: .55; }
-  .history .amt { margin-left: auto; font-family: "Baloo 2"; font-size: 1.1rem; font-weight: 700; color: var(--accent); }
-  .history .del { border: none; background: none; cursor: pointer; opacity: .4; font-size: 1rem; padding: 0 .25rem; }
+  .history .amt { margin-left: auto; font-family: "Baloo 2"; font-size: 1.1rem; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+  .history .del { border: none; background: none; cursor: pointer; opacity: .4; font-size: 1rem; padding: 0 .25rem; flex-shrink: 0; }
   .history .del:hover { opacity: 1; }
 
   .bank { background: #111; color: #fff; }
@@ -222,6 +224,7 @@
     var full = c.amounts[level];
     return key === HALF_MONTH ? full / 2 : full;
   }
+  function round1(n) { return Math.round(n * 10) / 10; }
   function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch (e) { return []; } }
   function save(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
 
@@ -230,11 +233,12 @@
 
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
   function avgText(p) {
+    if (p.total !== undefined && p.weeks !== undefined)
+      return p.total + " st på " + p.weeks + " v (" + (p.avg !== undefined ? round1(p.avg) : "-") + " i snitt)";
     if (p.avg !== undefined) return p.avg + " i snitt/vecka";
     if (p.missed !== undefined) return p.missed + " missade";
     return "";
   }
-  function avgVal(p) { return p.avg !== undefined ? p.avg : (p.missed !== undefined ? p.missed : ""); }
 
   function render() {
     cardsEl.innerHTML = "";
@@ -277,13 +281,17 @@
           "<div>" +
             '<div class="field"><label>📅 Vilken månad?</label>' +
             '<select class="js-month">' + monthOpts + "</select></div>" +
-            '<div class="field"><label>✅ Hur många to-dos har ' + c.name + ' krossat i <b>genomsnitt per vecka</b> i <span class="js-monthname">' + monthLabel(cur).toLowerCase() + "</span>?</label>" +
-            '<input class="js-avg" type="number" min="0" max="99" step="0.5" value="20" /></div>' +
+            '<div class="field"><label>📆 Hur många veckor i <span class="js-monthname">' + monthLabel(cur).toLowerCase() + "</span>?</label>" +
+            '<input class="js-weeks" type="number" min="0" max="10" step="1" value="' + (cur === HALF_MONTH ? 2 : 4) + '" /></div>' +
+            '<div class="field"><label>✅ Hur många rutor i To-do har ' + c.name + " krossat totalt i denna månad?</label>" +
+            '<input class="js-total" type="number" min="0" max="999" step="1" value="0" />' +
+            '<p class="snitt-hint js-snitt"></p></div>' +
           "</div>" +
           '<div class="result">' +
             '<p class="emojis js-emojis"></p>' +
             '<p class="level js-level"></p>' +
             '<p class="amount display js-amount"></p>' +
+            '<p class="avgline js-avgline"></p>' +
             '<p class="msg js-msg"></p>' +
             '<p class="halfnote js-halfnote">☀️ Augusti är bara 2 veckor i år – halverad månadspeng!</p>' +
             '<button class="btn js-register">💸 Registrera utbetalning</button>' +
@@ -297,11 +305,14 @@
       cardsEl.appendChild(section);
 
       var monthSel = section.querySelector(".js-month");
-      var avgIn = section.querySelector(".js-avg");
+      var weeksIn = section.querySelector(".js-weeks");
+      var totalIn = section.querySelector(".js-total");
       var monthName = section.querySelector(".js-monthname");
+      var snitt = section.querySelector(".js-snitt");
       var emojis = section.querySelector(".js-emojis");
       var levelEl = section.querySelector(".js-level");
       var amountEl = section.querySelector(".js-amount");
+      var avgline = section.querySelector(".js-avgline");
       var msgEl = section.querySelector(".js-msg");
       var halfnote = section.querySelector(".js-halfnote");
       var feedback = section.querySelector(".js-feedback");
@@ -313,15 +324,23 @@
         return null;
       }
 
+      function calcAvg() {
+        var w = Math.max(0, parseFloat(weeksIn.value || "0") || 0);
+        var t = Math.max(0, parseFloat(totalIn.value || "0") || 0);
+        return w > 0 ? t / w : 0;
+      }
+
       function update() {
-        var avg = Math.max(0, parseFloat(avgIn.value || "0") || 0);
+        var avg = calcAvg();
         var level = levelForAvg(avg);
         var amount = amountFor(c, level, monthSel.value);
         var pres = PRES[level];
         emojis.textContent = pres.emojis;
         levelEl.textContent = pres.label;
         amountEl.textContent = amount + " kr";
+        avgline.textContent = round1(avg) + " i snitt per vecka";
         msgEl.textContent = pres.msg;
+        snitt.textContent = "= " + round1(avg) + " i snitt per vecka";
         halfnote.style.display = monthSel.value === HALF_MONTH ? "block" : "none";
         var ex = existing();
         feedback.textContent = ex
@@ -332,16 +351,25 @@
       monthSel.addEventListener("change", function () {
         monthName.textContent = monthLabel(monthSel.value).toLowerCase();
         var ex = existing();
-        if (ex) avgIn.value = avgVal(ex);
+        if (ex) {
+          weeksIn.value = ex.weeks !== undefined ? ex.weeks : (monthSel.value === HALF_MONTH ? 2 : 4);
+          totalIn.value = ex.total !== undefined ? ex.total : (ex.avg !== undefined ? ex.avg : 0);
+        } else {
+          weeksIn.value = monthSel.value === HALF_MONTH ? 2 : 4;
+          totalIn.value = 0;
+        }
         update();
       });
-      avgIn.addEventListener("input", update);
+      weeksIn.addEventListener("input", update);
+      totalIn.addEventListener("input", update);
 
       section.querySelector(".js-register").addEventListener("click", function () {
-        var avg = Math.max(0, parseFloat(avgIn.value || "0") || 0);
+        var w = Math.max(0, parseFloat(weeksIn.value || "0") || 0);
+        var t = Math.max(0, parseFloat(totalIn.value || "0") || 0);
+        var avg = calcAvg();
         var level = levelForAvg(avg);
         var amount = amountFor(c, level, monthSel.value);
-        var rec = { child: c.id, monthKey: monthSel.value, avg: avg, level: level, amount: amount, ts: Date.now() };
+        var rec = { child: c.id, monthKey: monthSel.value, weeks: w, total: t, avg: avg, level: level, amount: amount, ts: Date.now() };
         payments = payments.filter(function (p) { return !(p.child === rec.child && p.monthKey === rec.monthKey); });
         payments.push(rec);
         save(payments);
@@ -390,14 +418,16 @@
       return {
         "Månad": monthLabel(p.monthKey) + " " + p.monthKey.split("-")[0],
         "Barn": p.child,
-        "Genomsnitt per vecka": avgVal(p),
+        "Antal veckor": p.weeks !== undefined ? p.weeks : "",
+        "Totalt antal": p.total !== undefined ? p.total : "",
+        "Genomsnitt per vecka": p.avg !== undefined ? round1(p.avg) : (p.missed !== undefined ? p.missed : ""),
         "Nivå": p.level > 0 ? "Nivå " + p.level : "Ingen utbetalning",
         "Belopp_kr": p.amount
       };
     });
     if (!rows.length) return;
     var ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [{ wch: 16 }, { wch: 6 }, { wch: 20 }, { wch: 18 }, { wch: 12 }];
+    ws["!cols"] = [{ wch: 16 }, { wch: 6 }, { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 12 }];
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Månadspeng");
     XLSX.writeFile(wb, "månadspeng.xlsx");
