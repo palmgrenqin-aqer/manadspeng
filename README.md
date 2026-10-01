@@ -1,6 +1,6 @@
 # Månadspeng 💰 (AQER)
 
-En webbapp för familjens månadspengsystem. Utbetalning sker i slutet av varje månad till **R (åk 6)** och **G (åk 8)**, baserat på hur många to-dos som missats under månaden.
+En webbapp för familjens månadspengsystem. Utbetalning sker i slutet av varje månad till **R (åk 6)** och **G (åk 8)**, baserat på genomsnittet av avklarade to-dos per vecka under månaden.
 
 **Live-sida (GitHub Pages):** https://palmgrenqin-aqer.github.io/manadspeng/
 
@@ -11,16 +11,18 @@ En webbapp för familjens månadspengsystem. Utbetalning sker i slutet av varje 
 | R (åk 6) | 100 kr | 150 kr | 200 kr |
 | G (åk 8) | 200 kr | 250 kr | 300 kr |
 
-- 🥇 Gjort alla to-dos → Nivå 3
-- 🥈 Missat upp till 3 to-dos → Nivå 2
-- 🥉 Missat upp till 5 to-dos → Nivå 1
-- 🚫 Missat fler än 5 to-dos → ingen utbetalning den månaden
+Nivån bestäms av **genomsnittet av avklarade to-dos per vecka** under månaden:
+
+- 🥇 Genomsnitt minst 20 per vecka → Nivå 3
+- 🥈 Genomsnitt minst 19 per vecka → Nivå 2
+- 🥉 Genomsnitt minst 18 per vecka → Nivå 1
+- 🚫 Under 18 i genomsnitt → ingen utbetalning den månaden
 - ☀️ Augusti 2026: bara 2 veckor → **halverad månadspeng**
 
 ## Funktioner
 
 - Reglerna visas överst på sidan
-- Ett kort per barn: välj månad, ange antal missade to-dos → nivå och belopp räknas ut direkt
+- Ett kort per barn: välj månad, ange genomsnitt avklarade to-dos per vecka → nivå och belopp räknas ut direkt
 - Årssumma per barn och utbetalningshistorik (sparad i webbläsarens localStorage)
 - Export till Excel (`månadspeng.xlsx`) med varje månads resultat
 
