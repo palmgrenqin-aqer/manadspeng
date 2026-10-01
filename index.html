@@ -172,7 +172,6 @@
       <li class="l2"><span class="ic">🥈</span> Genomsnitt minst 19 per vecka → <b>Nivå 2</b></li>
       <li class="l1"><span class="ic">🥉</span> Genomsnitt minst 18 per vecka → <b>Nivå 1</b></li>
       <li class="l0"><span class="ic">🚫</span> Under 18 i genomsnitt → ingen utbetalning den månaden</li>
-      <li style="background:#fff3d6"><span class="ic">☀️</span> Augusti 2026: bara 2 veckor → <b>halverad månadspeng</b></li>
     </ul>
   </section>
 
@@ -259,9 +258,9 @@
       }).join("");
 
       var histRows = history.map(function (p) {
-        return '<li><span class="m">' + monthLabel(p.monthKey) + '</span>' +
+        return '<li><span class="m">' + monthLabel(p.monthKey) + "</span>" +
           '<span class="dim">' + esc(avgText(p)) + "</span>" +
-          '<span class="dim">' + esc(PRES[p.level].label) + '</span>' +
+          '<span class="dim">' + esc(PRES[p.level].label) + "</span>" +
           '<span class="amt">' + p.amount + " kr</span>" +
           '<button class="del" data-child="' + c.id + '" data-month="' + p.monthKey + '" title="Ta bort">🗑️</button></li>';
       }).join("");
