@@ -17,12 +17,11 @@ Nivån bestäms av **genomsnittet av avklarade to-dos per vecka** under månaden
 - 🥈 Genomsnitt minst 19 per vecka → Nivå 2
 - 🥉 Genomsnitt minst 18 per vecka → Nivå 1
 - 🚫 Under 18 i genomsnitt → ingen utbetalning den månaden
-- ☀️ Augusti 2026: bara 2 veckor → **halverad månadspeng**
 
 ## Funktioner
 
 - Reglerna visas överst på sidan
-- Ett kort per barn: välj månad, ange genomsnitt avklarade to-dos per vecka → nivå och belopp räknas ut direkt
+- Ett kort per barn: välj månad, ange **hur många veckor** månaden har och **hur många rutor i To-do** barnet krossat totalt → genomsnitt per vecka, nivå och belopp räknas ut direkt
 - Årssumma per barn och utbetalningshistorik (sparad i webbläsarens localStorage)
 - Export till Excel (`månadspeng.xlsx`) med varje månads resultat
 
